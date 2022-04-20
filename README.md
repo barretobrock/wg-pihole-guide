@@ -47,8 +47,7 @@ sudo apt-get update && sudo apt-get install docker-ce docker-ce-cli containerd.i
 sudo docker run hello-world
 ```
 
-
-Next, we want to install Docker and docker-compose following [this guide](https://docs.docker.com/compose/install/).
+Next, we want to install docker-compose following [this guide](https://docs.docker.com/compose/install/).
 ```bash
 # Run this curl command to download the most recent stable release of docker-compose-example.yml (confirm the version and always inspect the code before downloading!)
 sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose-example.yml
