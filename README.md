@@ -1,6 +1,9 @@
 # wg-pihole-guide
 Standing guide to setting up a public wireguard + pihole adblocker
 
+### Recommended System
+ - Digital Ocean Droplet running Ubuntu 22.04
+
 ## Initial droplet setup
 First, set up the server from scratch (I used [this guide](https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-20-04) for DO droplets)
 ### Add new user
@@ -32,44 +35,68 @@ rsync --archive --chown=${NEWUSER}:${NEWUSER} ~/.ssh /home/${NEWUSER}
 In another terminal window, try to `ssh` into the droplet with the `NEWUSER` name and run a `sudo echo` command to ensure it's running properly. 
 
 ## Install Docker Engine & Docker Compose
-First, install Docker Engine. I followed [this guide](https://docs.docker.com/engine/install/ubuntu/)
+First, install Docker Engine. I followed [this guide](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-22-04)
+
 ```bash
-sudo apt install ca-certificates curl gnupg lsb-release
-# Add Docker's GPG key
+# Install prereqs - though, they should already be included
+sudo apt install apt-transport-https ca-certificates curl software-properties-common
+
+# Add GPG key for official Docker repo
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-# Set up stable repo
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Add Docker repo to APT sources, then update
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update
+
+# Make sure upcoming installation is from the Docker repo instead of default Ubuntu -- should be 5.20 or above
+apt-cache policy docker-ce
+
 # Install
-sudo apt-get update && sudo apt-get install docker-ce docker-ce-cli containerd.io
-# Confirm proper setup:
-sudo docker run hello-world
+sudo apt install docker-ce
+
+# Confirm service is running
+sudo systemctl status docker
+
+# Bind user to docker group
+sudo usermod -aG docker ${USER}
+# Log out, then back in, then type:
+su - ${USER}
+# Enter that user's pw
+
+# Confirm docker group is added to user:
+groups
 ```
 
-Next, we want to install docker-compose following [this guide](https://docs.docker.com/compose/install/).
+Next, we want to install docker-compose following [this guide](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-compose-on-ubuntu-22-04).
+
+Get the latest release from [here](https://github.com/docker/compose/releases).
+
 ```bash
-# Run this curl command to download the most recent stable release of docker-compose-example.yml (confirm the version and always inspect the code before downloading!)
-sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose-example.yml
+# Download
+LATEST=v2.6.1
+mkdir -p ~/.docker/cli-plugins/
+curl -SL https://github.com/docker/compose/releases/download/${LATEST}/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+
+# Set perms to make it executable
+chmod +x ~/.docker/cli-plugins/docker-compose
+
+# Verify that it runs correctly
+docker compose version
 ```
-```bash
-# Apply executable permissions to the binary
-sudo chmod +x /usr/local/bin/docker-compose-example.yml
-# Just for fun, create symbolic link to /usr/bin
-sudo ln -s /usr/local/bin/docker-compose-example.yml /usr/bin/docker-compose-example.yml
-```
-```bash
-# Lastly, test the installation
-#   Note that the first time this was done, it hanged a bit? Second try was successful.
-docker-compose-example.yml --version
-```
+
 ## Clone repo
 Clone this repo, which does everything we're looking to do, with the addition of adding unbound DNS
 ```bash
 git clone https://github.com/IAmStoxe/wirehole.git
+cd wirehole
 ```
 
-Make changes to the `docker-compose.yml` file, then run with `docker-compose up`. Scan QR codes, etc. When finished, CTRL+C to exit, and daemonize the command with `docker-compose up -d`. 
+Make changes to the `docker-compose.yml` file - timezones, pws, number of PEERS.
+```bash
+nano wirehole/docker-compose.yml
+```
+
+Run with `docker compose up`. Scan QR codes, etc. When finished, CTRL+C to exit, and daemonize the command with `docker compose up -d`. 
 Then, navigate to http://10.2.0.100/admin to set up pihole.
 
 ## Extras
@@ -81,4 +108,10 @@ sudo apt install wireguard
 sudo nano /etc/wireguard/wg0.conf
 # Then connect
 sudo wg-quick up wg0
+```
+### Updates
+To update an existing container, remove the old one and start a new one.
+```bash
+docker compose up --force-recreate --build -d
+docker image prune -f
 ```
