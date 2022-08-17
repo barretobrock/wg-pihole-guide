@@ -97,7 +97,7 @@ nano wirehole/docker-compose.yml
 ```
 
 Run with `docker compose up`. Scan QR codes, etc. When finished, CTRL+C to exit, and daemonize the command with `docker compose up -d`. 
-Then, navigate to http://10.2.0.100/admin to set up pihole.
+Then, navigate to the PiHole Admin page to set up pihole.
 
 ## Extras
 ### PC Setup
@@ -115,3 +115,14 @@ To update an existing container, remove the old one and start a new one.
 docker compose up --force-recreate --build -d
 docker image prune -f
 ```
+
+To update pihole's blocklist via the cli, activate the container's shell env:
+```bash
+docker exec -it pihole bash
+```
+Note: you can find the container name with `docker container ls`
+
+### Resources
+ - [AdTester](https://fuzzthepiguy.tech/adtest/)
+ - [DNS Leak Test](https://www.dnsleaktest.com/)
+ - [Blocklist Sources](https://firebog.net/)

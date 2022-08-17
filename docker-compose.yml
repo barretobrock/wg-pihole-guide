@@ -1,0 +1,69 @@
+version: "3"
+
+services:
+  wireguard:
+    depends_on: [pihole]
+    image: linuxserver/wireguard
+    container_name: wireguard
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago # Change to your timezone
+      - SERVERPORT=51820
+      - SERVERURL=xxx.xxx.xxx.xxx # <-- TODO!
+      #- SERVERURL=my.ddns.net #optional - For use with DDNS (Uncomment to use)
+      - PEERS=and_ba,and_ma,pc_mj,lt_ba,lt_ma,lt_mj # How many peers to generate for you (clients)
+      - PEERDNS=172.28.0.2 # Set it to point to pihole
+     # - INTERNAL_SUBNET=10.2.0.0
+      - ALLOWEDIPS=10.0.0.0/24,172.28.0.0/24,fd08:4711::/64,192.168.2.0/24
+
+    volumes:
+      - ./wireguard:/config
+      - /lib/modules:/lib/modules
+    ports:
+      - "51820:51820/udp"
+    dns:
+      - 10.2.0.5 # Points to pihole
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv6.conf.all.forwarding=1
+      # https://docs.pi-hole.net/guides/vpn/wireguard/internal/
+    restart: unless-stopped
+    networks:
+      vpn_net:
+        ipv4_address: 172.28.0.3
+
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    restart: unless-stopped
+    hostname: pi.hole
+    environment:
+      TZ: "America/Chicago"
+      WEBPASSWORD: "" # Blank password - Can be whatever you want.
+      #ServerIP: 10.2.0.5 # Internal IP of pihole
+      DNS1: 208.67.222.222 # OpenDNS
+      DNS2: 208.67.220.220 # If we don't specify two, it will auto pick google.
+      DNSMASQ_LISTENING: 'local'
+    # Volumes store your data between container upgrades
+    volumes:
+      - "./etc-pihole/:/etc/pihole/"
+      - "./etc-dnsmasq.d/:/etc/dnsmasq.d/"
+    # Recommended but not required (DHCP needs NET_ADMIN)
+    #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+    cap_add:
+      - NET_ADMIN
+    networks:
+      vpn_net:
+        ipv4_address: 172.28.0.2
+
+networks:
+  vpn_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
