@@ -73,7 +73,7 @@ Get the latest release from [here](https://github.com/docker/compose/releases).
 
 ```bash
 # Download
-LATEST=v2.6.1
+LATEST=v2.18.1
 mkdir -p ~/.docker/cli-plugins/
 curl -SL https://github.com/docker/compose/releases/download/${LATEST}/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
 
@@ -87,13 +87,13 @@ docker compose version
 ## Clone repo
 Clone this repo, which does everything we're looking to do, with the addition of adding unbound DNS
 ```bash
-git clone https://github.com/IAmStoxe/wirehole.git
-cd wirehole
+git clone https://github.com/barretobrock/wg-pihole-guide.git
+cd wg-pihole-guide
 ```
 
-Make changes to the `docker-compose.yml` file - timezones, pws, number of PEERS.
+Make changes to the `docker-compose.yml` file - timezones, main ip, pws, number of PEERS.
 ```bash
-nano wirehole/docker-compose.yml
+nano docker-compose.yml
 ```
 
 Run with `docker compose up`. Scan QR codes, etc. When finished, CTRL+C to exit, and daemonize the command with `docker compose up -d`. 

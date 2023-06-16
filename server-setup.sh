@@ -20,6 +20,4 @@ ufw enable
 ufw status
 
 echo "Configuring SSH access for user..."
-rsync --archive --chown${NEWUSER}:${NEWUSER} ~/.ssh /home/${NEWUSER}
-
-
+rsync --archive --chown=${NEWUSER}:${NEWUSER} ~/.ssh /home/${NEWUSER}
